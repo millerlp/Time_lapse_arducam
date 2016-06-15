@@ -21,7 +21,8 @@
 // and use Arduino IDE 1.5.2 compiler or above
 
 //#include <UTFT_SPI.h>
-#include <SD.h>
+//#include <SD.h>
+#include <SdFat.h>
 #include <Wire.h>
 #include "ArduCAM.h"
 #include <SPI.h>
@@ -32,21 +33,33 @@
 #endif
 
 // Define the CS pin for the SD card 
-#define SD_CS 9  
+#define SD_CS 9    // arduino pin 9, avr pin PB1
+#define SPI_CS 10  // arduino pin 10, avr pin PB2
+#define GRNLED PD4
+#define REDLED PD3
+#define BUTTON1 2
 
 // set pin 10 as the slave select for SPI:
-const int SPI_CS = 10;
+//const int SPI_CS = 10;
+
+// Create sd objects
+SdFat sd;
+SdFile logfile;  // for sd card, this is the file object to be written to
 
 ArduCAM myCAM(OV2640,SPI_CS);
 //UTFT myGLCD(SPI_CS);
 boolean isShowFlag = false;
 
-byte triggerPin = 8;
 //**************************************
 void setup()
 {
+  pinMode(GRNLED, OUTPUT);
+  pinMode(REDLED, OUTPUT);
+  pinMode(SPI_CS, OUTPUT);
+  
   // Define a trigger pin (connect to ground to trigger)
-  pinMode(triggerPin, INPUT_PULLUP);
+  pinMode(BUTTON1, INPUT_PULLUP);
+  
   uint8_t vid,pid;
   uint8_t temp; 
 #if defined(__SAM3X8E__)
@@ -76,7 +89,6 @@ void setup()
   // the ArduCAM chip
   myCAM.set_mode(MCU2LCD_MODE);
 
-//  myGLCD.InitLCD();
   
   //Check if the camera module type is OV2640
   myCAM.rdSensorReg8_8(OV2640_CHIPID_HIGH, &vid);
@@ -91,14 +103,39 @@ void setup()
 
   myCAM.InitCAM();
   
-  //Initialize SD Card
-  if (!SD.begin(SD_CS)) 
-  {
-    //while (1);    //If failed, stop here
-    Serial.println("SD Card Error");
-  }
-  else
-    Serial.println("SD Card detected!");
+//  //Initialize SD Card
+//  if (!SD.begin(SD_CS)) 
+//  {
+//    //while (1);    //If failed, stop here
+//    Serial.println("SD Card Error");
+//  }
+//  else
+//    Serial.println("SD Card detected!");
+
+ 	// Initialize the SD card object
+	// Try SPI_FULL_SPEED, or SPI_HALF_SPEED if full speed produces
+	// errors on a breadboard setup. 
+if (!sd.begin(SD_CS, SPI_FULL_SPEED)) {
+	// If the above statement returns FALSE after trying to 
+	// initialize the card, enter into this section and
+	// hold in an infinite loop.
+  Serial.println(F("SD card error"));
+  while(1){ // infinite loop due to SD card initialization error
+          
+          digitalWrite(REDLED, HIGH);
+          delay(100);
+          digitalWrite(REDLED, LOW);
+          digitalWrite(GRNLED, HIGH);
+          delay(100);
+          digitalWrite(GRNLED, LOW);
+  	  }
+} else {
+ Serial.println(F("SD detected"));
+} 
+    
+    
+    
+    
 }
 
 
@@ -116,9 +153,9 @@ void loop()
   int total_time = 0;
 
   //Wait trigger from shutter button 
-  if(digitalRead(triggerPin) == 0)  
-//  if(myCAM.get_bit(ARDUCHIP_TRIG , SHUTTER_MASK)) 
+  if ( digitalRead(BUTTON1) == 0)  
   {
+    Serial.println(F("Trigger"));
     isShowFlag = false;
     myCAM.set_mode(MCU2LCD_MODE);
     myCAM.set_format(JPEG);
@@ -127,25 +164,12 @@ void loop()
 //    myCAM.OV2640_set_JPEG_size(OV2640_640x480);
     myCAM.OV2640_set_JPEG_size(OV2640_1600x1200);
     //Wait until button released
-    while(digitalRead(triggerPin) == 0);  
-//    while(myCAM.get_bit(ARDUCHIP_TRIG, SHUTTER_MASK));
+    while(digitalRead(BUTTON1) == 0);  
     delay(1000);
     start_capture = 1;
-      
+    Serial.println("start")  ;
   }
-  else
-  {
-    if(isShowFlag )
-    {
-      if(!myCAM.get_bit(ARDUCHIP_TRIG,VSYNC_MASK))              //New Frame is coming
-      {
-         myCAM.set_mode(MCU2LCD_MODE);        //Switch to MCU
-//         myGLCD.resetXY();
-         myCAM.set_mode(CAM2LCD_MODE);        //Switch to CAM
-         while(!myCAM.get_bit(ARDUCHIP_TRIG,VSYNC_MASK));   //Wait for VSYNC is gone
-      }
-    }
-  }
+
   if(start_capture)
   {
     //Flush the FIFO 
@@ -154,23 +178,23 @@ void loop()
     myCAM.clear_fifo_flag();     
     //Start capture
     myCAM.start_capture();
-    Serial.println("Start Capture");     
+    Serial.println(F("Start Capture"));     
   }
   
   if(myCAM.get_bit(ARDUCHIP_TRIG ,CAP_DONE_MASK))
   {
 
-    Serial.println("Capture Done!");
+    Serial.println(F("Capture Done"));
     
     //Construct a file name
     k = k + 1;
     itoa(k, str, 10); 
     strcat(str,".jpg");
     //Open the new file  
-    outFile = SD.open(str,O_WRITE | O_CREAT | O_TRUNC);
+    outFile = sd.open(str,O_WRITE | O_CREAT | O_TRUNC);
     if (! outFile) 
     { 
-      Serial.println("open file failed");
+      Serial.println(F("Open file failed"));
       return;
     }
     total_time = millis();
@@ -202,9 +226,9 @@ void loop()
     //Close the file 
     outFile.close(); 
     total_time = millis() - total_time;
-    Serial.print("Total time used:");
+    Serial.print(F("Total time used:"));
     Serial.print(total_time, DEC);
-    Serial.println(" millisecond");    
+    Serial.println(F(" millisecond"));    
     //Clear the capture done flag 
     myCAM.clear_fifo_flag();
     //Clear the start capture flag
