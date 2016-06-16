@@ -240,6 +240,68 @@ void loop()
   }
 }
 
+//--------------------------------------------------------------
+// startTIMER2 function
+// Starts the 32.768kHz clock signal being fed into XTAL1 to drive the
+// quarter-second interrupts used during data-collecting periods. 
+// Supply a current DateTime time value. 
+// This function returns a DateTime value that can be used to show the 
+// current time when returning from this function. 
+DateTime startTIMER2(DateTime currTime){
+  TIMSK2 = 0; // stop timer 2 interrupts
+
+  RTC.enable32kHz(true);
+  ASSR = _BV(EXCLK); // Set EXCLK external clock bit in ASSR register
+  // The EXCLK bit should only be set if you're trying to feed the
+  // 32.768 clock signal from the Chronodot into XTAL1. 
+
+  ASSR = ASSR | _BV(AS2); // Set the AS2 bit, using | (OR) to avoid
+  // clobbering the EXCLK bit that might already be set. This tells 
+  // TIMER2 to take its clock signal from XTAL1/2
+  TCCR2A = 0; //override arduino settings, ensure WGM mode 0 (normal mode)
+  
+  // Set up TCCR2B register (Timer Counter Control Register 2 B) to use the 
+  // desired prescaler on the external 32.768kHz clock signal. Depending on 
+  // which bits you set high among CS22, CS21, and CS20, different 
+  // prescalers will be used. See Table 18-9 on page 158 of the AVR 328P 
+  // datasheet.
+  //  TCCR2B = 0;  // No clock source (Timer/Counter2 stopped)
+  // no prescaler -- TCNT2 will overflow once every 0.007813 seconds (128Hz)
+  //  TCCR2B = _BV(CS20) ; 
+  // prescaler clk/8 -- TCNT2 will overflow once every 0.0625 seconds (16Hz)
+  //  TCCR2B = _BV(CS21) ; 
+#if SAMPLES_PER_SECOND == 4
+  // prescaler clk/32 -- TCNT2 will overflow once every 0.25 seconds
+  TCCR2B = _BV(CS21) | _BV(CS20); 
+#endif
+
+#if SAMPLES_PER_SECOND == 2
+  TCCR2B = _BV(CS22) ; // prescaler clk/64 -- TCNT2 will overflow once every 0.5 seconds
+#endif
+
+#if SAMPLES_PER_SECOND == 1
+    TCCR2B = _BV(CS22) | _BV(CS20); // prescaler clk/128 -- TCNT2 will overflow once every 1 seconds
+#endif
+
+  // Pause briefly to let the RTC roll over a new second
+  DateTime starttime = currTime;
+  // Cycle in a while loop until the RTC's seconds value updates
+  while (starttime.second() == currTime.second()) {
+    delay(1);
+    currTime = RTC.now(); // check time again
+  }
+
+  TCNT2 = 0; // start the timer at zero
+  // wait for the registers to be updated
+  while (ASSR & (_BV(TCN2UB) | _BV(TCR2AUB) | _BV(TCR2BUB))) {} 
+  TIFR2 = _BV(OCF2B) | _BV(OCF2A) | _BV(TOV2); // clear the interrupt flags
+  TIMSK2 = _BV(TOIE2); // enable the TIMER2 interrupt on overflow
+  // TIMER2 will now create an interrupt every time it rolls over,
+  // which should be every 0.25, 0.5 or 1 seconds (depending on value 
+  // of SAMPLES_PER_SECOND) regardless of whether the AVR is awake or asleep.
+  f_wdt = 0;
+  return currTime;
+}
    
 
 
