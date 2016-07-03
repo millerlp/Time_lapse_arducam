@@ -1,9 +1,9 @@
-Timelapse_ArduCam
+# Timelapse_ArduCam
 
 This repository contains Arduino code and Eagle design files for a circuit board to interface
 with an ArduCam camera module to generate timelapse images. 
 
-![Image of circuit board](https://github.com/millerlp/Time_lapse_arducam/img/Timelapse_ArduCam_RevB.jpg)
+![Image of circuit board](/img/Timelapse_ArduCam_RevB.jpg)
 
 Features:
 * Images are stored on a micro SD card.
