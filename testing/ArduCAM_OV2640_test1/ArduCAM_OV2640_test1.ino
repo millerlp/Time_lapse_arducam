@@ -1,5 +1,7 @@
 /* ArduCAM_OV2640_test1.ino
  *  Modified by LPM
+ *  
+ *  Tested with Timelapse_arducam RevB hardware, works
  */  
 
 
@@ -27,6 +29,7 @@
 #include "ArduCAM.h"
 #include <SPI.h>
 #include "memorysaver.h"
+#include "RTClib.h"
 
 #if defined(__arm__)
   #include <itoa.h>
@@ -38,9 +41,14 @@
 #define GRNLED PD4
 #define REDLED PD3
 #define BUTTON1 2
+#define NPN PD7
 
 // set pin 10 as the slave select for SPI:
 //const int SPI_CS = 10;
+
+// Create real time clock object
+RTC_DS3231 rtc; 
+DateTime myTime;  // variable to keep time
 
 // Create sd objects
 SdFat sd;
@@ -56,6 +64,8 @@ void setup()
   pinMode(GRNLED, OUTPUT);
   pinMode(REDLED, OUTPUT);
   pinMode(SPI_CS, OUTPUT);
+  pinMode(NPN, OUTPUT);
+  digitalWrite(NPN, HIGH);
   
   // Define a trigger pin (connect to ground to trigger)
   pinMode(BUTTON1, INPUT_PULLUP);
@@ -67,6 +77,10 @@ void setup()
 #else
   Wire.begin();
 #endif
+
+  rtc.begin();
+  myTime = rtc.now();
+  
   Serial.begin(57600);
   Serial.println("ArduCAM Start!"); 
   // set the SPI_CS as an output:
@@ -250,7 +264,7 @@ void loop()
 DateTime startTIMER2(DateTime currTime){
   TIMSK2 = 0; // stop timer 2 interrupts
 
-  RTC.enable32kHz(true);
+  rtc.enable32kHz(true);
   ASSR = _BV(EXCLK); // Set EXCLK external clock bit in ASSR register
   // The EXCLK bit should only be set if you're trying to feed the
   // 32.768 clock signal from the Chronodot into XTAL1. 
@@ -288,7 +302,7 @@ DateTime startTIMER2(DateTime currTime){
   // Cycle in a while loop until the RTC's seconds value updates
   while (starttime.second() == currTime.second()) {
     delay(1);
-    currTime = RTC.now(); // check time again
+    currTime = rtc.now(); // check time again
   }
 
   TCNT2 = 0; // start the timer at zero
@@ -299,7 +313,7 @@ DateTime startTIMER2(DateTime currTime){
   // TIMER2 will now create an interrupt every time it rolls over,
   // which should be every 0.25, 0.5 or 1 seconds (depending on value 
   // of SAMPLES_PER_SECOND) regardless of whether the AVR is awake or asleep.
-  f_wdt = 0;
+//  f_wdt = 0;
   return currTime;
 }
    
