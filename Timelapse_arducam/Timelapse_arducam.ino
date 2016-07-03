@@ -92,10 +92,21 @@ void setup()
   
 	rtc.begin();
 	myTime = rtc.now();
-	char buf1[25];
-	myTime.toString(buf1, 25);
-	Serial.println(buf1);
- 
+  char buf1[25];
+  myTime.toString(buf1, 25);
+  Serial.println(buf1);
+  // Check the year to see if it's sensible. If not, 
+  // notify the useR by flashing the red led a bunch.
+   if (myTime.year() < 2016 | myTime.year() >= 2164){
+      for (int j = 0; j < 30; j++){ 
+          digitalWrite(REDLED, HIGH);
+          delay(400);
+          digitalWrite(REDLED, LOW);
+          delay(400);
+      }
+   }
+
+  // Flash LEDs to show reboot happened
 	digitalWrite(GRNLED, HIGH);
 	delay(1000);
 	digitalWrite(GRNLED, LOW);
