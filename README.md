@@ -16,7 +16,6 @@ of the ArduCam OV2640 2 megapixel camera module
 [Amazon link to camera module](https://www.amazon.com/Arducam-Module-Megapixels-Arduino-Mega2560/dp/B012UXNDOY)
 , and the $22 cost to get 3 copies of the circuit board made by OshPark.com.
 [Osh Park board](https://oshpark.com/shared_projects/kgNHWteo)
-![Image of circuit board from OshPark](https://oshpark.com/assets/badge-5b7ec47045b78aef6eb9d83b3bac6b1920de805e9a0c227658eac6e19a045b9c.png)
 
 
 
