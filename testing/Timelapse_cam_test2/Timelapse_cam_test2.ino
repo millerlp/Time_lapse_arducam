@@ -5,6 +5,10 @@
  *  RevB contains a NPN transistor to shut down the
  *  Arducam module. 
  *  Time is provided by a DS3231M RTC chip. 
+ *  
+ *  Currently functional, uses roughly 140mA when 
+ *  camera is on, but drops to <1mA when camera is
+ *  completely shut down. 
  */  
 
 
