@@ -45,32 +45,6 @@
 // Define the sleep/wake cycle (seconds)
 #define SAMPLES_PER_SECOND 1
 
-// ***** TYPE DEFINITIONS *****
-typedef enum STATE
-{
-  STATE_DATA, // collecting data normally
-  STATE_ERROR, // failFlag is true for some reason
-  STATE_IDLE, // waiting for signal to start collecting data
-} mainState_t;
-
-typedef enum DEBOUNCE_STATE
-{
-  DEBOUNCE_STATE_IDLE,
-  DEBOUNCE_STATE_CHECK,
-  DEBOUNCE_STATE_TIME
-} debounceState_t;
-
-// main state machine variable, this takes on the various
-// values defined for the STATE typedef above. 
-mainState_t mainState;
-mainState_t priorState;
-
-// debounce state machine variable, this takes on the various
-// values defined for the DEBOUNCE_STATE typedef above.
-volatile debounceState_t debounceState;
-// ***** *****
-
-
 // Create SD card objects
 SdFat sd;
 SdFile outFile;  // for sd card, this is the file object to be written to
@@ -578,7 +552,7 @@ DateTime startTIMER2(DateTime currTime){
   // TIMER2 will now create an interrupt every time it rolls over,
   // which should be every 0.25, 0.5 or 1 seconds (depending on value 
   // of SAMPLES_PER_SECOND) regardless of whether the AVR is awake or asleep.
-  mainState = STATE_IDLE;
+//  mainState = STATE_IDLE;
   return currTime;
 }
    
