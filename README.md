@@ -1,7 +1,12 @@
 # Timelapse_ArduCam
 
 This repository contains Arduino code and Eagle design files for a circuit board to interface
-with an ArduCam camera module to generate timelapse images. 
+with an ArduCam camera module to generate timelapse images. The device will sleep until a 
+user defined interval (some number of seconds) is reached, then it will boot up the 
+ArduCam module, take one picture, and write it to the SD card before returning to sleep. The
+ArduCam module consumes > 100mA while idling, so the AVR microcontroller uses a transistor to
+cut off all power to the ArduCam, and puts itself to sleep as well. During sleep intervals the
+average current draw is < 1mA. 
 
 ![Image of circuit board](/img/Timelapse_ArduCam_RevB.jpg)
 
