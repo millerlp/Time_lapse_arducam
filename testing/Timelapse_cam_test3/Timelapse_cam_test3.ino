@@ -37,7 +37,7 @@
 // Define the CS pin for the SD card 
 #define SD_CS 9    // arduino pin 9, avr pin PB1
 #define SPI_CS 10  // Arducam CS, arduino pin 10, avr pin PB2
-#define REDLED PD3  // Red LED
+#define REDLED 3  // Red LED
 #define GRNLED 4  // Green LED
 #define BUTTON1 2   // Tactile switch (INT0)
 #define NPN 7 // Base pin of NPN transistor
@@ -51,18 +51,18 @@ SdFile outFile;  // for sd card, this is the file object to be written to
 
 // Create real time clock object
 RTC_DS3231 rtc; 
+DateTime myTime;  // variable to keep time
 
-ArduCAM myCAM(OV2640,SPI_CS);
-
+// ArduCam variables
+ArduCAM myCAM(OV2640,SPI_CS); // Defines camera module type and chip select pin
 uint8_t start_capture = 0;
 int total_time = 0;
 
-int dawnTime = 5;	// Specify hour before which twilight brightness should run
-int duskTime = 21; 	// Specify hour after which twilight brightness should run
-int Interval = 15; // Specify a seconds mark to take picture on (10, 15, 20, 30)
+int dawnTime = 5;	// Specify hour before which no pictures should be taken
+int duskTime = 21; 	// Specify hour after which no pictures should be taken
+int Interval = 30; // Specify a seconds mark to take picture on (10, 15, 20, 30)
                   // A normal picture+save operation takes ~ 5-6 seconds
 int cameraWarmUpTime = 500; // (ms) Delay to let camera stabilize after waking
-DateTime myTime;	// variable to keep time
 
 // Declare initial name for output files written to SD card
 // The newer versions of SdFat library support long filenames
