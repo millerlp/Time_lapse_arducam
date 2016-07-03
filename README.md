@@ -15,7 +15,7 @@ The price for parts and the PCB boards should come out to $75, including the $30
 of the ArduCam OV2640 2 megapixel camera module
 [Amazon link to camera module,](https://www.amazon.com/Arducam-Module-Megapixels-Arduino-Mega2560/dp/B012UXNDOY)
  and the $22 cost to get 3 copies of the circuit board made by OshPark.com.
-[Osh Park board](https://oshpark.com/shared_projects/kgNHWteo)
+[direct link to this board on Osh Park](https://oshpark.com/shared_projects/kgNHWteo)
 
 
 
@@ -24,7 +24,7 @@ Features:
 * Timekeeping is accomplished with a DS3231 real time clock chip and backup battery.
 * Power is provided by batteries through one of the available power plugs, either a 2.1mm barrel
 connector or JST PH series plug (similar to that used on many Lithium battery packs). A 3.3V 
-low dropout voltage regulator is included. 
+low dropout voltage regulator is included. I typically use 4xAA batteries to power the unit.
 * A reset button and a trigger button are included, and can be mounted on either top or bottom 
 of the board. 
 * Indicator LEDs may also be mounted on the top or bottom of the board. 
