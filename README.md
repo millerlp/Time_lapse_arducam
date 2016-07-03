@@ -13,8 +13,8 @@ routine (approx 5-6 seconds), power draw is around 130mA.
 
 The price for parts and the PCB boards should come out to $75, including the $30 cost of 
 of the ArduCam OV2640 2 megapixel camera module
-[Amazon link to camera module](https://www.amazon.com/Arducam-Module-Megapixels-Arduino-Mega2560/dp/B012UXNDOY)
-, and the $22 cost to get 3 copies of the circuit board made by OshPark.com.
+[Amazon link to camera module,](https://www.amazon.com/Arducam-Module-Megapixels-Arduino-Mega2560/dp/B012UXNDOY)
+ and the $22 cost to get 3 copies of the circuit board made by OshPark.com.
 [Osh Park board](https://oshpark.com/shared_projects/kgNHWteo)
 
 
