@@ -6,7 +6,8 @@ user defined interval (some number of seconds) is reached, then it will boot up 
 ArduCam module, take one picture, and write it to the SD card before returning to sleep. The
 ArduCam module consumes > 100mA while idling, so the AVR microcontroller uses a transistor to
 cut off all power to the ArduCam, and puts itself to sleep as well. During sleep intervals the
-average current draw is < 1mA. 
+average overall current draw of the entire device is < 1mA. During an image capture and save 
+routine (approx 5-6 seconds), power draw is around 130mA. 
 
 ![Image of circuit board](/img/Timelapse_ArduCam_RevB.jpg)
 
