@@ -204,6 +204,16 @@ void setup()
   }
   
   SPI.end();
+  digitalWrite(13, LOW);
+  pinMode(13, INPUT);  // Including this here appears to interfere with I2C comms
+  pinMode(12, INPUT);
+  pinMode(11, INPUT);
+  pinMode(10, INPUT);
+  Wire.end();
+  pinMode(SDA, INPUT);
+  pinMode(SCL, INPUT);
+  digitalWrite(NPN, LOW); // shut down Arducam power
+
   
 	startTIMER2(myTime);
     
@@ -214,12 +224,16 @@ void setup()
 void loop()
 {
 	// Check time at start of every loop
+  Wire.begin();
 	myTime = rtc.now();
 	char buf1[25];
 	myTime.toString(buf1, 25);
 	Serial.println(buf1);
 	delay(5);
- 
+  Wire.end();
+  pinMode(SDA, INPUT);
+  pinMode(SCL, INPUT);
+   
 	byte buf[256]; // used for moving image data to sd card
 	static int i = 0;
 	// static int k = 0;
@@ -302,7 +316,10 @@ void loop()
     //Flush the FIFO 
     myCAM.flush_fifo(); 
     //Clear the capture done flag before starting new capture
-    myCAM.clear_fifo_flag();     
+    myCAM.clear_fifo_flag();   
+    
+    delay(500); // ? Let camera exposure stabilize before picture?  
+    
     //Start capture
     myCAM.start_capture();    
 	  // Check the Capture Done flag, which is stored in the ARDUCHIP_TRIG
@@ -313,7 +330,7 @@ void loop()
 	
 	if(myCAM.get_bit(ARDUCHIP_TRIG ,CAP_DONE_MASK)) {
 
-		// Serial.println(F("Capture Done"));
+		 Serial.println(F("Capture Done"));
 		
 		//Construct a file name
 		initFileName(myTime);
@@ -387,12 +404,12 @@ void loop()
 		// parasitic power loss
 		SPI.end();
 		digitalWrite(13, LOW);
-		pinMode(13, INPUT);
+		pinMode(13, INPUT);  
 		pinMode(12, INPUT);
 		pinMode(11, INPUT);
 		pinMode(10, INPUT);
     // Kill the Arducam's power supply
-//		digitalWrite(NPN, LOW); // For some reason this is causing the I2C to go bad
+		digitalWrite(NPN, LOW); // For some reason this is causing the I2C to go bad
    
 		digitalWrite(REDLED, HIGH);
 		delay(800);
