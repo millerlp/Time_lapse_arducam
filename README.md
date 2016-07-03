@@ -9,6 +9,10 @@ cut off all power to the ArduCam, and puts itself to sleep as well. During sleep
 average overall current draw of the entire device is < 1mA. During an image capture and save 
 routine (approx 5-6 seconds), power draw is around 130mA. 
 
+The price for parts and the PCB boards should come out to $70, including the $30 cost of 
+of the ArduCam OV2640 2 megapixel camera module. 
+[Amazon link to camera module](https://www.amazon.com/Arducam-Module-Megapixels-Arduino-Mega2560/dp/B012UXNDOY)
+
 ![Image of circuit board](/img/Timelapse_ArduCam_RevB.jpg)
 
 Features:
