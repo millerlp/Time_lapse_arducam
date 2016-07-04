@@ -24,7 +24,7 @@ Features:
 * Timekeeping is accomplished with a DS3231 real time clock chip and backup battery.
 * Power is provided by batteries through one of the available power plugs, either a 2.1mm barrel
 connector or JST PH series plug (similar to that used on many Lithium battery packs). A 3.3V 
-low dropout voltage regulator is included. I typically use 4xAA batteries to power the unit.
+low dropout voltage regulator is included. I typically use 4 AA batteries to power the unit.
 * A reset button and a trigger button are included, and can be mounted on either top or bottom 
 of the board. 
 * Indicator LEDs may also be mounted on the top or bottom of the board. 
