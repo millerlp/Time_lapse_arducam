@@ -87,6 +87,12 @@ void setup()
   uint8_t vid,pid;
   uint8_t temp; 
 
+  // Flash Green LED to show reboot happened
+  digitalWrite(GRNLED, HIGH);
+  delay(1000);
+  digitalWrite(GRNLED, LOW);
+
+
   Serial.begin(57600);
   Serial.println(F("Reboot"));
   
@@ -103,16 +109,11 @@ void setup()
           delay(400);
           digitalWrite(REDLED, LOW);
           delay(400);
+          Serial.println(F("RTC error"));
       }
    }
 
-  // Flash LEDs to show reboot happened
-	digitalWrite(GRNLED, HIGH);
-	delay(1000);
-	digitalWrite(GRNLED, LOW);
-  digitalWrite(REDLED, HIGH);
-  delay(500);
-  digitalWrite(REDLED, LOW);
+
 
   // initialize SPI:
   SPI.begin(); 
@@ -237,9 +238,9 @@ void loop()
       //Clear the capture done flag before starting new capture
       myCAM.clear_fifo_flag();   
 
-      digitalWrite(REDLED, HIGH);
+      digitalWrite(GRNLED, HIGH);
       delay(cameraWarmUpTime); // ?Let camera exposure stabilize before picture?  
-      digitalWrite(REDLED, LOW);
+      digitalWrite(GRNLED, LOW);
       
       //Start capture
       myCAM.start_capture();    
