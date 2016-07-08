@@ -60,7 +60,7 @@ int total_time = 0;
 
 int dawnTime = 5;	// Specify hour before which no pictures should be taken
 int duskTime = 21; 	// Specify hour after which no pictures should be taken
-int Interval = 30; // Specify a seconds mark to take picture on (10, 15, 20, 30)
+int Interval = 15; // Specify a seconds mark to take picture on (10, 15, 20, 30)
                   // A normal picture+save operation takes ~ 5-6 seconds
 int cameraWarmUpTime = 500; // (ms) Delay to let camera stabilize after waking
 
@@ -96,8 +96,8 @@ void setup()
   Serial.begin(57600);
   Serial.println(F("Reboot"));
   
-	rtc.begin();
-	myTime = rtc.now();
+  rtc.begin();
+  myTime = rtc.now();
   char buf1[25];
   myTime.toString(buf1, 25);
   Serial.println(buf1);
@@ -200,13 +200,13 @@ void setup()
   pinMode(11, INPUT);   // SPI MOSI
   pinMode(10, INPUT);   // SPI Chip select for Arducam
   // Shut down I2C (Wire) functions temporarily
-  Wire.end();
+//  Wire.end();
   pinMode(SDA, INPUT);  // I2C SDA line
   pinMode(SCL, INPUT);  // I2C SCL line
   digitalWrite(NPN, LOW); // disconnect Arducam's ground pin
 
   
-	startTIMER2(myTime);
+  startTIMER2(myTime);
     
 } // end of setup() loop
 //*************************************************
@@ -221,7 +221,7 @@ void loop()
 	myTime.toString(buf1, 25);
 	Serial.println(buf1);
 	delay(5);
-  Wire.end();
+//  Wire.end();
   pinMode(SDA, INPUT);
   pinMode(SCL, INPUT);
 
@@ -250,11 +250,11 @@ void loop()
         // do nothing while waiting for capture done flag
       }
   
-      if(myCAM.get_bit(ARDUCHIP_TRIG ,CAP_DONE_MASK)) {
+      if(myCAM.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK)) {
          Serial.println(F("Capture Done"));
     
         // Update the time stamp
-         Wire.begin();
+//         Wire.begin();
          myTime = rtc.now();
         //Construct a file name
         initFileName(myTime);
@@ -271,8 +271,11 @@ void loop()
         Serial.print(F("Total time used:"));
         Serial.print(total_time, DEC);
         Serial.println(F(" ms")); 
-        delay(5); // Give Serial time to write   
-    
+        digitalWrite(GRNLED,HIGH);
+        delay(15); // Give Serial time to write   
+        digitalWrite(GRNLED,LOW);
+        
+        myCAM.flush_fifo(); // force another flush
         // Power down the ArduCam (this disables I2C and SPI also)
         disableArduCam();
       } // end of if(myCAM.get_bit(ARDUCHIP_TRIG ,CAP_DONE_MASK))
@@ -305,7 +308,7 @@ void loop()
   if(start_capture)
   {
     //Flush the FIFO 
-    myCAM.flush_fifo(); 
+    myCAM.flush_fifo();   // SPI bus
     //Clear the capture done flag before starting new capture
     myCAM.clear_fifo_flag();   
     
@@ -323,7 +326,7 @@ void loop()
 		 Serial.println(F("Capture Done"));
 
     // Update the time stamp
-     Wire.begin();
+//     Wire.begin();
      myTime = rtc.now();
 		//Construct a file name
 		initFileName(myTime);
@@ -376,6 +379,8 @@ ISR(TIMER2_OVF_vect) {
 void enableArduCam (void) 
 {
   uint8_t temp;
+  Wire.begin();
+  SPI.begin();
   digitalWrite(NPN, HIGH); // power up Arducam supply
   
   // Time to power stuff back up and take a picture
@@ -437,28 +442,115 @@ void writeToSD(DateTime myTime)
 {
   byte buf[256]; // used for moving image data to sd card
   static int i = 0; // used to keep track of image data saving
-  uint8_t temp,temp_last; // used to keep track of image data saving
+  uint8_t temp = 0;
+  uint8_t temp_last = 0; // used to keep track of image data saving
 
-  temp = myCAM.read_fifo();
+ //************************************ 
+  bool nostart = true;
+  int fifomarker = 0;
+  uint8_t store1 = 0;
+  uint8_t store2 = 0;
+  uint8_t store3 = 0;
+  while (nostart) {
+    store3 = store2;
+    store2 = store1;
+    store1 = myCAM.read_fifo(); // Get 1 byte from buffer
+    fifomarker++; // Increment to mark that one more byte has been read
+    Serial.print(fifomarker);
+    Serial.print("\t");
+    Serial.print(store3, HEX);
+    Serial.print(" ");
+    Serial.print(store2, HEX);
+    Serial.print(" ");
+    Serial.println(store1, HEX);
+    
+    // Check to see if the last three bytes read are FF D8 FF
+    if ( (store3 == 0xFF) & (store2 == 0xD8) & (store1 == 0xFF) ){
+       nostart = false; // Will kill the while loop
+       // Once the match to FF D8 FF is found, set the fifomarker
+       // back to the index (0-based) that marks the start of the
+       // FF D8 FF sequence in the fifo buffer
+       fifomarker = fifomarker - 3; 
+       Serial.print("Found marker ");
+       Serial.println(fifomarker);
+       
+    }
+  }
+  
+  Serial.print(myCAM.read_fifo(), HEX);
+  Serial.print(" ");
+  Serial.print(myCAM.read_fifo(), HEX);
+  Serial.print(" ");
+  Serial.print(myCAM.read_fifo(), HEX);
+  Serial.println();
+  
+  // Reset FIFO read pointer to 0. The FIFO_RDPTR_RST_MASK is
+  // defined as 0x10 (setting bit 3) in Arducam.h, although the 
+  // hardware guide says that the read pointer reset is at bit 4
+  // (0x20) and the write pointer reset is at bit 5 (0x40)
+  myCAM.write_reg(ARDUCHIP_FIFO, 0x10); // prepending cruft
+  // Sending 0x10 is probably resetting the read_fifo pointer 
+  // back to 0. The first file comes through fine. The 2nd file
+  // has random bytes at start, then the full FF D8 FF code and 
+  // JFIF. Based on this test and the 0x20 test below, I think the
+  // random bytes aren't actually coming from the FIFO buffer, since
+  // it always returns FF D8 FF as the first three bytes on every 
+  // picture (1st, 2nd, 3rd pic etc in the loop). 
+  
+  // The culprit of the random bytes must be coming from somewhere
+  // else in the pipeline, after the FIFO buffer. If the SPI 
+  // buffer somehow has random chunk retained in it, this could 
+  // be an issue, and the SdFat library may be to blame. Check if there's
+  // a way to fully flush the SdFat buffers after writing and closing 
+  // the file. 
+
+
+//  myCAM.write_reg(ARDUCHIP_FIFO, 0x20); // prepending cruft
+  // Using 0x20 results in the first (usually good file) having
+  // the FF D8 FF cut off, starting then with JFIF. 2nd file
+  // has many random bytes at start, then FF D8 FF is cut off, and
+  // then JFIF appears. So this is probably not resetting the
+  // read_fifo pointer back to 0. 3 values of the fifo were read 
+  // out (the good FF D8 FF), and then not recovered when 
+  // fifomarker is reset, since the pointer isn't reset. 
+  
+  
+  // Now that we're back at the start of the FIFO, advance the
+  // specified number of bytes to get to the real start of the
+  // JPEG file. This loop will just read individual bytes until
+  // enough have been read to reach the starting code FF D8 FF
+  for (int j = fifomarker; j > 0; j--){
+     Serial.print(j);Serial.println(" Dummy read");
+     temp = myCAM.read_fifo(); // dummy read
+  }
+  
+  //************************************
+  
+  temp = myCAM.read_fifo(); // Get 1 byte from camera fifo buffer
   // Write first image data to buffer
   buf[i++] = temp;
 
+
   // Read JPEG data from FIFO
+  // JPEGs should end with FF D9 (hex), so this
+  // statement looks for that code to determine whether 
+  // this is the end of the file or not. 
   while( (temp != 0xD9) | (temp_last != 0xFF) )
   {
     temp_last = temp;
-    temp = myCAM.read_fifo();
-    // Write image data to buffer if not full
-    if (i < 256){
-    buf[i++] = temp;
+    temp = myCAM.read_fifo(); // read another byte
+      // Write image data to buffer if not full
+      if (i < 256){
+      buf[i++] = temp;
     } else {
-    // Write 256 bytes image data to file on SD card
-    outFile.write(buf,256);
-    i = 0;
-    buf[i++] = temp;
+      // Write 256 bytes image data to file on SD card
+      outFile.write(buf,256);
+      i = 0;
+      buf[i++] = temp;
     }
   }
-  // Write the remaining bytes in the buffer
+  // Write the remaining bytes in the buffer since the
+  // previous while statement has been satisfied now
   if (i > 0) {
     outFile.write(buf, i);
   }
@@ -478,16 +570,16 @@ void writeToSD(DateTime myTime)
 // Function to shut ArduCam module down completely
 void disableArduCam(void)
 {
-      //Clear the capture done flag 
+    // Clear the capture done flag 
     myCAM.clear_fifo_flag();
-    //Clear the start capture flag
+    // Clear the start capture flag
     start_capture = 0;
     
     // Power down the memory controller circuit   
-    myCAM.set_bit(0x83, LOW_POWER_MODE); // alternate attempt at memory shutdown
+//    myCAM.set_bit(0x83, LOW_POWER_MODE); // alternate attempt at memory shutdown
     // Power down the camera module. This will lose all settings on 
     // the camera (resolution, file format etc.)
-    myCAM.set_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);  //enable low power
+//    myCAM.set_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);  //enable low power
     
     // Shut down the SPI lines, turn outputs into INPUT to prevent
     // parasitic power loss
@@ -497,7 +589,7 @@ void disableArduCam(void)
     pinMode(12, INPUT);
     pinMode(11, INPUT);
     pinMode(10, INPUT);
-    Wire.end();
+//    Wire.end();
     pinMode(SDA, INPUT);
     pinMode(SCL, INPUT);
     // Kill the Arducam's power supply
