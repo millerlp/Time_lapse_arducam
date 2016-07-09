@@ -441,7 +441,7 @@ void enableArduCam (void)
 void writeToSD(DateTime myTime)
 {
   byte buf[256]; // used for moving image data to sd card
-  static int i = 0; // used to keep track of image data saving
+  int i = 0; // used to keep track of image data saving
   uint8_t temp = 0;
   uint8_t temp_last = 0; // used to keep track of image data saving
 
@@ -540,13 +540,13 @@ void writeToSD(DateTime myTime)
     temp_last = temp;
     temp = myCAM.read_fifo(); // read another byte
       // Write image data to buffer if not full
-      if (i < 256){
+    if (i < 256){
       buf[i++] = temp;
-    } else {
+    } else {  // if i == 256, i.e. 'buf' is full
       // Write 256 bytes image data to file on SD card
       outFile.write(buf,256);
-      i = 0;
-      buf[i++] = temp;
+      i = 0;  // reset buf index to 0
+      buf[i++] = temp; // copy the recent byte to the start of buf
     }
   }
   // Write the remaining bytes in the buffer since the
