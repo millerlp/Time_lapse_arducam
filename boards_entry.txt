@@ -1,0 +1,25 @@
+# For Arduino IDE v 1.6.5 or later
+# Cut and paste this entry into your existing boards.txt file 
+# found inside the /hardware/arduino/avr/ directory. 
+# Select the Timelapse Arducam (8MHz internal clock, 2.7V brownout) entry in the
+# Arduino IDE menu under Tools>Board>
+
+TimelapseArducam328.name=Timelapse Arducam (8 MHz internal clock, 2.7V brownout)
+TimelapseArducam328.upload.tool=arduino:avrdude
+TimelapseArducam328.upload.protocol=arduino
+TimelapseArducam328.upload.maximum_size=30720
+TimelapseArducam328.upload.speed=57600
+
+TimelapseArducam328.bootloader.low_fuses=0xE2
+TimelapseArducam328.bootloader.high_fuses=0xDA
+TimelapseArducam328.bootloader.extended_fuses=0x05 
+
+TimelapseArducam328.bootloader.file=atmega/ATmegaBOOT_168_atmega328_pro_8MHz.hex
+TimelapseArducam328.bootloader.unlock_bits=0x3F
+TimelapseArducam328.bootloader.lock_bits=0x0F
+TimelapseArducam328.bootloader.tool=arduino:avrdude
+TimelapseArducam328.build.mcu=atmega328p
+TimelapseArducam328.build.f_cpu=8000000L
+TimelapseArducam328.build.core=arduino
+TimelapseArducam328.build.board=AVR_TIMELAPSE_ARDUCAM
+TimelapseArducam328.build.variant=standard 
