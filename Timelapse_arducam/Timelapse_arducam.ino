@@ -131,20 +131,10 @@ void setup()
   uint8_t temp; 
 
   // Flash Green LED to show reboot happened
-<<<<<<< HEAD
-  for (int j = 0; j <=5; j++){
-    digitalWrite(GRNLED, HIGH);
-    delay(100);
-    digitalWrite(GRNLED, LOW);  
-    delay(100);
-  }
-  
-=======
   digitalWrite(GRNLED, HIGH);
   delay(1000);
   digitalWrite(GRNLED, LOW);
   delay(500);
->>>>>>> origin/master
 
 
   Serial.begin(57600);
@@ -156,8 +146,8 @@ void setup()
   myTime.toString(buf1, 25);
   Serial.println(buf1);
   // Check the year to see if it's sensible. If not, 
-  // notify the user by flashing the red led a bunch.
-   if (myTime.year() < 2016 | myTime.year() >= 2164){
+  // notify the user by flashing the red LED a bunch.
+   if ( (myTime.year() < 2016) | (myTime.year() >= 2164) ){
       for (int j = 0; j < 30; j++){ 
           digitalWrite(REDLED, HIGH);
           delay(1000);
@@ -171,43 +161,33 @@ void setup()
   SPI.begin(); 
   
   //***********************************
-  // Initialize Arducam modules
+  // Initialize Arducam module
   // Clear the power down bit in case the device
   // was left in power-down mode (re-enables ArduCAM module)
   myCAM.clear_bit(ARDUCHIP_GPIO,GPIO_PWDN_MASK);  // SPI bus
   // Re-enable the memory controller circuit
 	myCAM.clear_bit(0x83, FIFO_PWRDN_MASK); // SPI bus
 	myCAM.clear_bit(0x83, LOW_POWER_MODE);    // SPI bus
-  
-<<<<<<< HEAD
   //Check if the ArduCAM SPI bus is OK
   myCAM.write_reg(ARDUCHIP_TEST1, 0x55);  // SPI bus
   temp = myCAM.read_reg(ARDUCHIP_TEST1);  // SPI bus
-=======
   // Check if the ArduCAM SPI bus is OK
   myCAM.write_reg(ARDUCHIP_TEST1, 0x55);
   temp = myCAM.read_reg(ARDUCHIP_TEST1);
->>>>>>> origin/master
   if(temp != 0x55)
   {
     Serial.println("SPI interface Error!");
     digitalWrite(REDLED, HIGH);
-    while(1);
+    while(1); // Hang here, since a missing camera is useless
   } 
   
   // Change MCU mode
   // MCU2LCD_MODE denotes that microcontroller is responsible
-<<<<<<< HEAD
   // for interfacing with a LCD display screen, rather than 
   // the ArduCAM chip
   myCAM.set_mode(MCU2LCD_MODE); // SPI bus
-  
-  //Check if the camera module type is OV2640
-  myCAM.rdSensorReg8_8(OV2640_CHIPID_HIGH, &vid); // I2C bus
-  myCAM.rdSensorReg8_8(OV2640_CHIPID_LOW, &pid);  // I2C bus
-  if((vid != 0x26) || (pid != 0x42)) {
-=======
-  // for interfacing with a LCD display screen (or SD card), 
+
+  // For interfacing with a LCD display screen (or SD card), 
   // rather than the ArduCAM chip
   myCAM.set_mode(MCU2LCD_MODE);
   
@@ -215,8 +195,7 @@ void setup()
   myCAM.rdSensorReg8_8(OV2640_CHIPID_HIGH, &vid);
   myCAM.rdSensorReg8_8(OV2640_CHIPID_LOW, &pid);
   if ( (vid != 0x26) || (pid != 0x42) ) {
->>>>>>> origin/master
-    Serial.println("Can't find OV2640 module!");
+    Serial.println(F("Can't find OV2640 module!"));
     while(1){ // infinite loop due to module initialization error
             
             digitalWrite(REDLED, HIGH);
@@ -227,17 +206,16 @@ void setup()
             digitalWrite(GRNLED, LOW);
     	  }
   } else {
-    Serial.println("OV2640 detected");
-<<<<<<< HEAD
+    Serial.println(F("OV2640 detected"));
 
-=======
+    // Give 5 quick flashes to denote that the 
+    // camera was successfully detected
     for (int j = 0; j < 5; j++){
       digitalWrite(GRNLED,HIGH);
       delay(50);
       digitalWrite(GRNLED,LOW);
       delay(50);
     }
->>>>>>> origin/master
   }
   delay(500);
     
@@ -268,6 +246,8 @@ void setup()
     	  }
   } else {
 		Serial.println(F("SD init"));
+   // Give a quick set of flashes to denote
+   // that the SD card was initialized
     for (int j = 0; j < 5; j++){
       digitalWrite(GRNLED,HIGH);
       delay(50);
@@ -290,13 +270,6 @@ void setup()
   pinMode(SDA, INPUT);  // I2C SDA line
   pinMode(SCL, INPUT);  // I2C SCL line
   digitalWrite(NPN, LOW); // disconnect Arducam's ground pin
-
-  for(int j = 0; j<=10; j++){
-    digitalWrite(GRNLED, HIGH);
-    delay(50);
-    digitalWrite(GRNLED, LOW);
-    delay(50);
-  }
   
   startTIMER2(myTime);
     
@@ -318,7 +291,7 @@ void loop()
   pinMode(SCL, INPUT);  // Disable I2C again
 
   // Only take pictures during specified hours
-  if (myTime.hour() >= dawnTime & myTime.hour() <= duskTime) {
+  if ( (myTime.hour() >= dawnTime) & (myTime.hour() <= duskTime) ) {
     // Take a picture every Interval seconds
     if (myTime.second() % Interval == 0){
       total_time = millis(); // store time used to take and store picture 
